@@ -76,6 +76,15 @@ test('Next HTTP pipeline applies authentication and owner-role proxy checks befo
     }
     assert.equal(ready, true, `Next dev server did not become ready. ${String(lastError)} ${logs.join('').slice(-3000)}`);
 
+    const healthResponse = await fetch(`${origin}/api/health`);
+    assert.equal(healthResponse.status, 200);
+    const health = await healthResponse.json() as { status: string; service: string; timestamp: string };
+    assert.deepEqual(Object.keys(health).sort(), ['service', 'status', 'timestamp']);
+    assert.equal(health.status, 'healthy');
+    assert.equal(health.service, 'conic-business-dashboard');
+    assert.equal(new Date(health.timestamp).toISOString(), health.timestamp);
+    assert.equal(healthResponse.headers.get('cache-control'), 'no-store');
+
     const unauthenticated = await fetch(`${origin}/api/finance?period=invalid`);
     assert.equal(unauthenticated.status, 401);
 
